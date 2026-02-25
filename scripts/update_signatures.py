@@ -25,12 +25,25 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Default remote URL (can be overridden with --url flag)
+# Default remote URL (can be overridden with --url flag or feed_config.json)
 # Users should host their own signature feed or use a community-maintained one
 DEFAULT_SIGNATURE_URL = ""
 SIGNATURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "signatures")
 SIGNATURES_FILE = os.path.join(SIGNATURES_DIR, "signatures.json")
+FEED_CONFIG_FILE = os.path.join(SIGNATURES_DIR, "feed_config.json")
 BACKUP_SUFFIX = ".backup"
+
+
+def get_feed_url():
+    """Get the configured feed URL from feed_config.json or default."""
+    if os.path.exists(FEED_CONFIG_FILE):
+        try:
+            with open(FEED_CONFIG_FILE, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            return config.get("url", DEFAULT_SIGNATURE_URL)
+        except (json.JSONDecodeError, IOError):
+            pass
+    return DEFAULT_SIGNATURE_URL
 
 
 def load_signatures(path=None):
@@ -323,15 +336,30 @@ def main():
             sys.exit(1)
         add_entry(sys.argv[2], "known_malicious")
 
+    elif arg == "--set-feed":
+        if len(sys.argv) < 3:
+            print("Usage: --set-feed <url>")
+            print("Sets the default signature feed URL for future --fetch calls.")
+            sys.exit(1)
+        url = sys.argv[2]
+        os.makedirs(SIGNATURES_DIR, exist_ok=True)
+        config = {"url": url, "set_at": datetime.now(timezone.utc).isoformat()}
+        with open(FEED_CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+        print(f"Feed URL set: {url}")
+        print(f"Config saved to: {FEED_CONFIG_FILE}")
+        print("Run 'update_signatures.py --fetch' to download signatures from this feed.")
+
     elif arg == "--url" or arg == "--fetch":
-        url = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_SIGNATURE_URL
+        url = sys.argv[2] if (len(sys.argv) > 2 and not sys.argv[2].startswith("--")) else get_feed_url()
         if not url:
             print("No signature URL configured.")
-            print("Usage: update_signatures.py --url <signature-feed-url>")
             print()
-            print("To set up a signature feed:")
-            print("  1. Host a signatures.json file on a trusted server or GitHub repo")
-            print("  2. Run: python update_signatures.py --url https://your-server.com/signatures.json")
+            print("Set up a feed URL first:")
+            print("  python update_signatures.py --set-feed https://raw.githubusercontent.com/YOUR_USER/mcp-signatures/main/signatures.json")
+            print()
+            print("Or provide a URL directly:")
+            print("  python update_signatures.py --url https://your-server.com/signatures.json")
             print()
             print("Or add patterns manually:")
             print('  python update_signatures.py --add-pattern \'{"id":"MY_001","category":"prompt-injection","severity":"HIGH","description":"My pattern","regex":"my_regex","file_types":[".py"]}\'')
@@ -381,7 +409,7 @@ def main():
 
     else:
         print(f"Unknown argument: {arg}")
-        print("Usage: update_signatures.py [--show | --validate | --url <url> | --add-pattern <json> | --add-malicious <json>]")
+        print("Usage: update_signatures.py [--show | --validate | --fetch | --url <url> | --set-feed <url> | --add-pattern <json> | --add-malicious <json>]")
         sys.exit(1)
 
 

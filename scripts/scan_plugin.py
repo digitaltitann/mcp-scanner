@@ -17,10 +17,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCANNER_VERSION = "1.2.0"
+SCANNER_VERSION = "1.3.0"
 
 # External signatures file (loaded at runtime, merged with built-in patterns)
 SIGNATURES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "signatures", "signatures.json")
+# Allowlist file for false positive suppression
+ALLOWLIST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "signatures", "allowlist.json")
 
 # Directories and files to skip during scanning
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".tox", "dist", "build"}
@@ -1310,6 +1312,59 @@ def determine_risk_level(severity_counts):
     return "SAFE"
 
 
+def load_allowlist():
+    """Load the allowlist for false positive suppression."""
+    if not os.path.exists(ALLOWLIST_FILE):
+        return []
+    try:
+        with open(ALLOWLIST_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("rules", [])
+    except (json.JSONDecodeError, IOError):
+        return []
+
+
+def _pattern_id_matches(pattern_id, pattern_spec):
+    """Check if a pattern ID matches a spec (supports * wildcard at end)."""
+    if pattern_spec.endswith("*"):
+        return pattern_id.startswith(pattern_spec[:-1])
+    return pattern_id == pattern_spec
+
+
+def apply_allowlist(findings, target_path, allowlist_rules):
+    """Filter findings against allowlist rules. Returns (kept, suppressed_count)."""
+    if not allowlist_rules:
+        return findings, 0
+
+    target_str = str(target_path).replace("\\", "/").lower()
+    kept = []
+    suppressed = 0
+
+    for finding in findings:
+        is_suppressed = False
+        for rule in allowlist_rules:
+            plugin_pattern = rule.get("plugin_pattern", "").lower()
+            pattern_ids = rule.get("pattern_ids", [])
+
+            # Check if the target path matches the plugin pattern
+            if plugin_pattern and plugin_pattern in target_str:
+                # Check if the finding's pattern ID matches any in the allowlist
+                finding_pid = finding.get("pattern_id", "")
+                for spec in pattern_ids:
+                    if _pattern_id_matches(finding_pid, spec):
+                        is_suppressed = True
+                        break
+            if is_suppressed:
+                break
+
+        if is_suppressed:
+            suppressed += 1
+        else:
+            kept.append(finding)
+
+    return kept, suppressed
+
+
 def generate_report(target_dir):
     """Generate the complete scan report."""
     target = Path(target_dir).resolve()
@@ -1373,6 +1428,10 @@ def generate_report(target_dir):
             seen.add(key)
             unique_findings.append(f)
 
+    # Apply allowlist to suppress known false positives
+    allowlist_rules = load_allowlist()
+    unique_findings, suppressed_count = apply_allowlist(unique_findings, target, allowlist_rules)
+
     # Count by severity and category
     severity_counts = {}
     category_counts = {}
@@ -1404,7 +1463,8 @@ def generate_report(target_dir):
                 "external_patterns": len(ext_patterns) + len(ext_multiline),
                 "external_malicious": len(ext_malicious),
                 "total": len(merged_patterns) + len(merged_multiline) + len(merged_malicious)
-            }
+            },
+            "allowlist_suppressed": suppressed_count
         },
         "summary": {
             "overall_risk": overall_risk,
@@ -1424,17 +1484,68 @@ def generate_report(target_dir):
     return report
 
 
+def format_markdown(report):
+    """Format a scan report as markdown (inline, no external dependency)."""
+    lines = []
+    meta = report.get("scan_metadata", {})
+    summary = report.get("summary", {})
+    findings = report.get("findings", [])
+
+    target_name = Path(meta.get("target", "Unknown")).name
+    timestamp = meta.get("timestamp", "")[:19].replace("T", " ")
+    overall_risk = summary.get("overall_risk", "UNKNOWN")
+    by_severity = summary.get("by_severity", {})
+    by_category = summary.get("by_category", {})
+    suppressed = meta.get("allowlist_suppressed", 0)
+
+    lines.append(f"# Security Scan: {target_name}")
+    lines.append(f"\n**Risk: {overall_risk}** | {summary.get('total_findings', 0)} findings | Scanner v{meta.get('scanner_version', '?')}")
+    lines.append(f"Scanned {meta.get('files_scanned', 0)} files at {timestamp} UTC")
+    if suppressed > 0:
+        lines.append(f"({suppressed} findings suppressed by allowlist)")
+    lines.append("")
+
+    if findings:
+        lines.append("| # | Severity | Category | File | Description |")
+        lines.append("|---|----------|----------|------|-------------|")
+        for f in findings:
+            fname = Path(f.get("file", "")).name
+            lines.append(f"| {f.get('id', '?')} | {f['severity']} | {f['category']} | {fname}:{f.get('line', 0)} | {f['description'][:80]} |")
+        lines.append("")
+
+        for f in findings:
+            if f["severity"] in ("CRITICAL", "HIGH"):
+                lines.append(f"### [{f['severity']}] {f.get('pattern_id', '')} — {f['description']}")
+                lines.append(f"- File: `{f.get('file', '')}` line {f.get('line', 0)}")
+                if f.get("line_content"):
+                    lines.append(f"- Code: `{f['line_content'][:120]}`")
+                if f.get("context_note"):
+                    lines.append(f"- Context: {f['context_note']}")
+                lines.append("")
+    else:
+        lines.append("No security findings. This plugin appears safe.")
+
+    lines.append(f"\n---\n*MCP Scanner v{meta.get('scanner_version', '?')} | {meta.get('signatures', {}).get('total', '?')} signatures*")
+    return "\n".join(lines)
+
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({
-            "error": "Usage: scan_plugin.py <path-to-plugin-directory>",
+            "error": "Usage: scan_plugin.py <path-to-plugin-directory> [--markdown]",
             "example": "python scan_plugin.py ~/.claude/plugins/some-plugin"
         }, indent=2))
         sys.exit(0)
 
     target = sys.argv[1]
+    use_markdown = "--markdown" in sys.argv
+
     report = generate_report(target)
-    print(json.dumps(report, indent=2))
+
+    if use_markdown:
+        print(format_markdown(report))
+    else:
+        print(json.dumps(report, indent=2))
     sys.exit(0)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "mcp-scanner",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Scans plugins, skills, hooks, and MCP servers for security threats before use. Detects prompt injection, data exfiltration, credential theft, obfuscation, and more.",
   "author": {
     "name": "johnn"

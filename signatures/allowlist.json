@@ -1,0 +1,19 @@
+{
+  "description": "Allowlist for false positive suppression. Findings matching these rules are excluded from scan reports.",
+  "rules": [
+    {
+      "id": "allowlist-001",
+      "plugin_pattern": "security-guidance",
+      "pattern_ids": ["PROMPT_*", "CODE_EXEC_*", "EXFIL_*", "CRED_*", "OBFUSC_*", "FS_*", "NET_*", "PERM_*", "HOOK_*"],
+      "reason": "Security guidance plugin references threat patterns as documentation examples — all matches are string literals in educational content",
+      "added": "2026-02-24"
+    },
+    {
+      "id": "allowlist-002",
+      "plugin_pattern": "mcp-scanner",
+      "pattern_ids": ["PROMPT_*", "CODE_EXEC_*", "EXFIL_*", "CRED_*", "NET_*", "FS_*", "HOOK_*", "OBFUSC_*", "PERM_*", "RUGPULL_*", "MAL_*", "EXT_*"],
+      "reason": "MCP scanner contains detection patterns as regex strings — scanning itself triggers every category",
+      "added": "2026-02-24"
+    }
+  ]
+}

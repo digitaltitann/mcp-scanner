@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Auto-generated backups
+*.backup
+
+# User-specific feed config
+signatures/feed_config.json
+
+# Runtime logs and reports
+runtime-monitor.log

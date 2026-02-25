@@ -51,6 +51,47 @@ Or ask naturally: *"Is this plugin safe?"*
 /export-report ~/.claude/plugins/some-plugin
 ```
 
+### Scan only changed files
+
+```
+/scan-diff ~/.claude/plugins/some-plugin
+/scan-diff ~/.claude/plugins/some-plugin --since HEAD~1
+```
+
+### Scan a GitHub repo without installing
+
+```
+/scan-remote user/plugin-repo
+/scan-remote https://github.com/user/plugin-repo --branch dev
+```
+
+Requires the `gh` CLI to be installed and authenticated.
+
+### View scan history and trends
+
+```
+/scan-history --show
+/scan-history --trends
+/scan-history --stats
+```
+
+### Map plugin permissions
+
+```
+/scan-permissions ~/.claude/plugins/some-plugin
+/scan-permissions --all
+```
+
+Shows what each plugin can access: hooks, network, env vars, filesystem, subprocesses.
+
+### Export as SARIF for CI/IDE integration
+
+```
+/export-sarif ~/.claude/plugins/some-plugin -o report.sarif
+```
+
+SARIF 2.1.0 output works with GitHub Code Scanning, VS Code SARIF Viewer, and CI pipelines.
+
 ## What It Detects
 
 **81 built-in signatures** across 11 threat categories (expandable to 145+ with the [community signature feed](https://github.com/digitaltitann/mcp-signatures)):
@@ -201,19 +242,29 @@ mcp-scanner/
 │   ├── scan-plugin.md           # /scan-plugin command
 │   ├── scan-all.md              # /scan-all command
 │   ├── scan-mcp.md              # /scan-mcp command
+│   ├── scan-diff.md             # /scan-diff command
+│   ├── scan-remote.md           # /scan-remote command
+│   ├── scan-history.md          # /scan-history command
+│   ├── scan-permissions.md      # /scan-permissions command
 │   ├── install-plugin.md        # /install-plugin command
-│   └── export-report.md         # /export-report command
+│   ├── export-report.md         # /export-report command
+│   └── export-sarif.md          # /export-sarif command
 ├── hooks/
 │   ├── hooks.json               # Hook configuration
 │   ├── gate_scan.py             # SessionStart gate scan
 │   └── runtime_monitor.py       # PreToolUse runtime monitor
 ├── scripts/
 │   ├── scan_plugin.py           # Core scanner (81 built-in + community feed)
+│   ├── scan_diff.py             # Diff scanner (changed files only)
+│   ├── scan_remote.py           # Remote GitHub scanner (no-clone)
+│   ├── scan_history.py          # Scan history tracker (SQLite)
+│   ├── scan_permissions.py      # Permission mapper (plugin access analysis)
+│   ├── scan_mcp_settings.py     # MCP settings scanner
 │   ├── daily_scan.py            # Daily scheduled scan
 │   ├── update_signatures.py     # Signature management
 │   ├── audit_deps.py            # Dependency auditor
 │   ├── export_report.py         # Markdown report exporter
-│   └── scan_mcp_settings.py     # MCP settings scanner
+│   └── export_sarif.py          # SARIF 2.1.0 exporter (CI/IDE)
 ├── signatures/
 │   ├── signatures.json          # External signatures (loaded at runtime)
 │   └── allowlist.json           # False positive suppressions

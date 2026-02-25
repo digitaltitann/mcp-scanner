@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
-  "updated": "2026-02-25T02:01:26.971618+00:00",
-  "source": "local",
+  "version": "1.0.0",
+  "updated": "2026-02-25T04:06:47.452533+00:00",
+  "source": "https://github.com/digitaltitann/mcp-signatures",
   "description": "External signature definitions for MCP Scanner. These are loaded at runtime and merged with built-in patterns. Run update_signatures.py to fetch latest from remote.",
   "patterns": [
     {
@@ -54,6 +54,108 @@
       "context_note": "Data URLs in markdown images can encode hidden content or exfiltrate data"
     },
     {
+      "id": "EXT_PROMPT_004",
+      "category": "prompt-injection",
+      "severity": "CRITICAL",
+      "description": "System prompt extraction attempt ('repeat your instructions', 'show system prompt')",
+      "regex": "(?:repeat|show|display|print|output|reveal|tell me)\\s+(?:your|the)\\s+(?:system\\s+prompt|instructions|system\\s+message|initial\\s+prompt|original\\s+prompt)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt"
+      ],
+      "context_note": "Attempts to extract the system prompt to understand and bypass safety constraints"
+    },
+    {
+      "id": "EXT_PROMPT_005",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Developer mode jailbreak ('developer mode', 'debug mode enabled')",
+      "regex": "(?:you\\s+are\\s+now\\s+in|enable|activate|enter)\\s+(?:developer|debug|admin|root|god|unrestricted)\\s+mode",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt",
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Fake mode activation to bypass safety constraints"
+    },
+    {
+      "id": "EXT_PROMPT_006",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Instruction override via XML-like system tags (<system>, <instructions>)",
+      "regex": "<(?:system|instructions|rules|override|admin)>\\s*(?:you|ignore|forget|always|never|must|override|from now)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt"
+      ],
+      "context_note": "Fake XML system tags with directive content attempting to inject authoritative-looking instructions"
+    },
+    {
+      "id": "EXT_PROMPT_007",
+      "category": "prompt-injection",
+      "severity": "MEDIUM",
+      "description": "Hidden instructions in HTML comments within markdown",
+      "regex": "<!--[^>]*(?:ignore|override|forget|disregard|instead|always|never|must|mandatory)[^>]*-->",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx"
+      ],
+      "context_note": "HTML comments can hide instructions from casual human review but may be processed by AI"
+    },
+    {
+      "id": "EXT_PROMPT_008",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Multi-turn manipulation: references to previous fake agreements",
+      "regex": "(?:as\\s+(?:we|you)\\s+(?:agreed|discussed|established)|remember\\s+(?:when|what|that)\\s+(?:you|we|I)\\s+(?:said|agreed|promised))",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt"
+      ],
+      "context_note": "Creates false context of prior agreements to manipulate behavior"
+    },
+    {
+      "id": "EXT_PROMPT_009",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Suppression of safety warnings ('do not warn', 'skip safety', 'without warning')",
+      "regex": "(?:do\\s+not|don't|never|skip|suppress|hide|omit|disable)\\s+(?:warn|alert|flag|report|mention|show)\\s+(?:the\\s+user|about|any|safety|security|risk)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt",
+        ".py",
+        ".js"
+      ],
+      "context_note": "Attempting to suppress security warnings or user notifications"
+    },
+    {
+      "id": "EXT_PROMPT_010",
+      "category": "prompt-injection",
+      "severity": "CRITICAL",
+      "description": "Token/character budget exhaustion attack pattern",
+      "regex": "(?:repeat\\s+(?:the\\s+following|this)\\s+(?:\\d{3,}|thousand|million)\\s+times|fill\\s+(?:the\\s+)?(?:rest|remaining)\\s+(?:of\\s+)?(?:your|the)\\s+(?:context|output|response))",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".txt"
+      ],
+      "context_note": "Attempts to exhaust context window or output tokens to bypass safety checks at the end"
+    },
+    {
       "id": "EXT_EXFIL_001",
       "category": "data-exfiltration",
       "severity": "CRITICAL",
@@ -82,6 +184,640 @@
         ".sh"
       ],
       "context_note": "Clipboard access can steal copied credentials or sensitive data"
+    },
+    {
+      "id": "EXT_EXFIL_003",
+      "category": "data-exfiltration",
+      "severity": "HIGH",
+      "description": "WebSocket connection to external server (potential covert channel)",
+      "regex": "(?:new\\s+WebSocket|websockets?\\.connect|ws://|wss://)\\s*\\(",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".mjs"
+      ],
+      "context_note": "WebSocket connections can create persistent covert channels for data exfiltration"
+    },
+    {
+      "id": "EXT_EXFIL_004",
+      "category": "data-exfiltration",
+      "severity": "MEDIUM",
+      "description": "Screenshot or screen capture functionality",
+      "regex": "(?:screenshot|screen_capture|screencapture|ImageGrab\\.grab|pyautogui\\.screenshot|mss\\.mss)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Screen capture can exfiltrate visible sensitive data"
+    },
+    {
+      "id": "EXT_EXFIL_005",
+      "category": "data-exfiltration",
+      "severity": "HIGH",
+      "description": "Data encoding in URL query parameters for exfiltration",
+      "regex": "(?:urllib\\.parse\\.quote|encodeURIComponent|querystring\\.stringify).*(?:environ|secret|key|token|password|credential)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Encoding secrets into URL parameters is a common exfiltration technique"
+    },
+    {
+      "id": "EXT_EXFIL_006",
+      "category": "data-exfiltration",
+      "severity": "HIGH",
+      "description": "Exfiltration via error reporting services (Sentry, Bugsnag, Rollbar)",
+      "regex": "(?:sentry_sdk|Sentry\\.init|bugsnag|Bugsnag\\.notify|rollbar\\.report).*(?:environ|secret|key|token|password|api_key)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Error reporting services can be abused to exfiltrate data through error metadata"
+    },
+    {
+      "id": "EXT_CRED_001",
+      "category": "credential-theft",
+      "severity": "CRITICAL",
+      "description": "AWS credentials file access (~/.aws/credentials or config)",
+      "regex": "(?:\\.aws[/\\\\](?:credentials|config)|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|aws_session_token)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
+      ],
+      "context_note": "Accessing AWS credential files or environment variables for cloud account compromise"
+    },
+    {
+      "id": "EXT_CRED_002",
+      "category": "credential-theft",
+      "severity": "CRITICAL",
+      "description": "GCP service account key or credentials access",
+      "regex": "(?:GOOGLE_APPLICATION_CREDENTIALS|service_account\\.json|gcloud.*auth|GCLOUD_PROJECT|GCP_KEY)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
+      ],
+      "context_note": "Accessing GCP service account keys for cloud account compromise"
+    },
+    {
+      "id": "EXT_CRED_003",
+      "category": "credential-theft",
+      "severity": "CRITICAL",
+      "description": "Azure credentials or subscription access",
+      "regex": "(?:AZURE_(?:CLIENT_SECRET|TENANT_ID|SUBSCRIPTION_ID|CLIENT_ID)|azure.*credential|DefaultAzureCredential)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
+      ],
+      "context_note": "Accessing Azure credentials for cloud account compromise"
+    },
+    {
+      "id": "EXT_CRED_004",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "NPM token or registry credential access (.npmrc, NPM_TOKEN)",
+      "regex": "(?:\\.npmrc|NPM_TOKEN|npm_token|_authToken|registry\\.npmjs\\.org.*:_auth)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "NPM tokens enable publishing malicious packages under the user's identity"
+    },
+    {
+      "id": "EXT_CRED_005",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "GitHub token or personal access token access",
+      "regex": "(?:GITHUB_TOKEN|GH_TOKEN|GITHUB_PAT|gh[ps]_[A-Za-z0-9_]{36,}|\\.git-credentials)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".md"
+      ],
+      "context_note": "GitHub tokens enable repository access, code modification, and supply chain attacks"
+    },
+    {
+      "id": "EXT_CRED_006",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "Docker config with authentication credentials",
+      "regex": "(?:\\.docker[/\\\\]config\\.json|DOCKER_AUTH|docker.*login|DOCKER_PASSWORD)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "Docker credentials enable pushing malicious container images"
+    },
+    {
+      "id": "EXT_CRED_007",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "Kubernetes config or service account token access",
+      "regex": "(?:\\.kube[/\\\\]config|KUBECONFIG|kubernetes\\.io[/\\\\]serviceaccount|kubectl.*--token)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "Kubernetes credentials enable cluster access and lateral movement"
+    },
+    {
+      "id": "EXT_CRED_008",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "macOS Keychain access attempt",
+      "regex": "(?:security\\s+find-(?:generic|internet)-password|SecKeychainFindGenericPassword|keychain|KeychainAccess)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".sh",
+        ".bash",
+        ".zsh"
+      ],
+      "context_note": "Keychain access can steal stored credentials for any service"
+    },
+    {
+      "id": "EXT_CRED_009",
+      "category": "credential-theft",
+      "severity": "HIGH",
+      "description": "Windows Credential Manager access",
+      "regex": "(?:cmdkey|CredRead|CredEnumerate|vaultcmd|Windows\\.Security\\.Credentials|Credential\\s*Manager)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ps1",
+        ".bat",
+        ".cmd"
+      ],
+      "context_note": "Windows Credential Manager stores passwords for network resources and websites"
+    },
+    {
+      "id": "EXT_CRED_010",
+      "category": "credential-theft",
+      "severity": "CRITICAL",
+      "description": "Browser credential or cookie database access",
+      "regex": "(?:Login\\s*Data|Cookies\\.sqlite|cookies\\.sqlite|chrome.*(?:Login|Cookie)|firefox.*(?:logins|cookies)|(?:decrypt|extract).*(?:password|cookie|browser))",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Browser credential databases contain saved passwords and session cookies"
+    },
+    {
+      "id": "EXT_CODE_001",
+      "category": "code-execution",
+      "severity": "HIGH",
+      "description": "JavaScript Function constructor (eval alternative)",
+      "regex": "new\\s+Function\\s*\\(",
+      "flags": "",
+      "file_types": [
+        ".js",
+        ".ts",
+        ".mjs",
+        ".cjs",
+        ".jsx",
+        ".tsx"
+      ],
+      "context_note": "Function constructor is functionally equivalent to eval and can execute arbitrary code"
+    },
+    {
+      "id": "EXT_CODE_002",
+      "category": "code-execution",
+      "severity": "HIGH",
+      "description": "Dynamic import() with variable path",
+      "regex": "import\\s*\\(\\s*(?![\"\\'`])[^)]+\\)",
+      "flags": "",
+      "file_types": [
+        ".js",
+        ".ts",
+        ".mjs",
+        ".cjs",
+        ".jsx",
+        ".tsx"
+      ],
+      "context_note": "Dynamic imports with variable paths can load arbitrary modules at runtime"
+    },
+    {
+      "id": "EXT_CODE_003",
+      "category": "code-execution",
+      "severity": "HIGH",
+      "description": "Node.js vm module for sandboxed code execution",
+      "regex": "(?:vm\\.runInNewContext|vm\\.runInThisContext|vm\\.createContext|vm\\.Script|vm2|isolated-vm)",
+      "flags": "",
+      "file_types": [
+        ".js",
+        ".ts",
+        ".mjs",
+        ".cjs"
+      ],
+      "context_note": "VM modules can execute arbitrary code, and vm sandbox escapes are well-documented"
+    },
+    {
+      "id": "EXT_CODE_004",
+      "category": "code-execution",
+      "severity": "MEDIUM",
+      "description": "WebAssembly instantiation (WASM binary loading)",
+      "regex": "(?:WebAssembly\\.instantiate|WebAssembly\\.compile|wasm\\.instantiate|wasmtime|wasmer)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".js",
+        ".ts",
+        ".py"
+      ],
+      "context_note": "WASM can execute obfuscated binary code that bypasses text-based scanning"
+    },
+    {
+      "id": "EXT_CODE_005",
+      "category": "code-execution",
+      "severity": "HIGH",
+      "description": "Python compile() + exec() or code object manipulation",
+      "regex": "(?:compile\\s*\\([^)]*['\"]exec['\"]|types\\.CodeType|code_type|marshal\\.loads)",
+      "flags": "",
+      "file_types": [
+        ".py"
+      ],
+      "context_note": "Code object manipulation can execute arbitrary Python bytecode"
+    },
+    {
+      "id": "EXT_CODE_006",
+      "category": "code-execution",
+      "severity": "HIGH",
+      "description": "Python importlib dynamic module loading",
+      "regex": "importlib\\.(?:import_module|util\\.spec_from_file_location|machinery\\.SourceFileLoader)",
+      "flags": "",
+      "file_types": [
+        ".py"
+      ],
+      "context_note": "Dynamic module loading can import and execute arbitrary Python files"
+    },
+    {
+      "id": "EXT_NET_001",
+      "category": "network-abuse",
+      "severity": "HIGH",
+      "description": "Connection to known C2 or tunneling services (ngrok, localtunnel, serveo)",
+      "regex": "(?:ngrok|localtunnel|serveo\\.net|bore\\.pub|localhost\\.run|cloudflare.*tunnel|telebit)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash",
+        ".json"
+      ],
+      "context_note": "Tunneling services can expose local services or create reverse connections to attackers"
+    },
+    {
+      "id": "EXT_NET_002",
+      "category": "network-abuse",
+      "severity": "MEDIUM",
+      "description": "Tor network or .onion address access",
+      "regex": "(?:\\.onion\\b|socks5.*9050|tor_proxy|stem\\.control|TorRequest)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "Tor access suggests intent to anonymize network traffic for malicious purposes"
+    },
+    {
+      "id": "EXT_NET_003",
+      "category": "network-abuse",
+      "severity": "HIGH",
+      "description": "IRC or Discord webhook for C2 communication",
+      "regex": "(?:discord(?:app)?\\.com[/\\\\]api[/\\\\]webhooks|irc\\.(?:connect|Client)|matrix\\.org.*/_matrix|telegram-bot-api|api\\.telegram\\.org)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Chat platform webhooks and bots can serve as command-and-control channels"
+    },
+    {
+      "id": "EXT_FS_001",
+      "category": "filesystem-abuse",
+      "severity": "CRITICAL",
+      "description": "Git hooks directory modification (.git/hooks/)",
+      "regex": "(?:\\.git[/\\\\]hooks|pre-commit|post-commit|pre-push|post-receive).*(?:write|create|modify|chmod|echo|cat\\s*>)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
+      ],
+      "context_note": "Modifying git hooks enables persistent code execution on every commit or push"
+    },
+    {
+      "id": "EXT_FS_002",
+      "category": "filesystem-abuse",
+      "severity": "HIGH",
+      "description": "VS Code or IDE extension/settings modification",
+      "regex": "(?:\\.vscode[/\\\\](?:extensions|settings|tasks)\\.json|\\.idea[/\\\\]|extensions\\.json.*install)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "IDE modification can install malicious extensions or change security settings"
+    },
+    {
+      "id": "EXT_FS_003",
+      "category": "filesystem-abuse",
+      "severity": "CRITICAL",
+      "description": "Claude Code settings or plugin modification",
+      "regex": "(?:\\.claude[/\\\\](?:settings|plugins|hooks)|CLAUDE_(?:SETTINGS|PLUGINS|HOOKS)_PATH).*(?:write|modify|create|update|patch|open.*[wwa])",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "Modifying Claude Code settings can disable security features or install malicious plugins"
+    },
+    {
+      "id": "EXT_FS_004",
+      "category": "filesystem-abuse",
+      "severity": "HIGH",
+      "description": "Package manager config poisoning (pip.conf, .npmrc, .yarnrc)",
+      "regex": "(?:pip\\.conf|pip\\.ini|pydistutils\\.cfg|\\.npmrc|\\.yarnrc|\\bnuget\\.config).*(?:index-url|registry|source)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh"
+      ],
+      "context_note": "Redirecting package managers to malicious registries enables supply chain attacks"
+    },
+    {
+      "id": "EXT_OBFUSC_001",
+      "category": "obfuscation",
+      "severity": "HIGH",
+      "description": "JavaScript obfuscation tools (javascript-obfuscator, jsfuck, JSA)",
+      "regex": "(?:javascript-obfuscator|jsfuck|JSFuck|jjencode|aaencode|hieroglyphy)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".js",
+        ".ts",
+        ".json",
+        ".py"
+      ],
+      "context_note": "Obfuscation tools indicate intent to hide code behavior from review"
+    },
+    {
+      "id": "EXT_OBFUSC_002",
+      "category": "obfuscation",
+      "severity": "HIGH",
+      "description": "Python code obfuscation (pyarmor, pyobfuscate, cython compilation)",
+      "regex": "(?:pyarmor|pyobfuscate|oxyry|pyminifier|Cython\\.Build|cythonize).*(?:encrypt|obfusc|protect|compile)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".json",
+        ".toml",
+        ".cfg"
+      ],
+      "context_note": "Python obfuscation tools hide code behavior from review and static analysis"
+    },
+    {
+      "id": "EXT_OBFUSC_003",
+      "category": "obfuscation",
+      "severity": "MEDIUM",
+      "description": "Rot13 or simple substitution cipher encoding",
+      "regex": "(?:codecs\\.decode.*rot_13|rot13|str\\.maketrans|string\\.translate)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py"
+      ],
+      "context_note": "Simple encoding schemes can hide malicious strings from casual review"
+    },
+    {
+      "id": "EXT_HOOK_001",
+      "category": "hook-hijacking",
+      "severity": "CRITICAL",
+      "description": "Hook modifying tool call inputs before execution",
+      "regex": "(?:tool_input|toolInput|input_data).*(?:replace|modify|update|inject|append|prepend)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Hooks that modify tool inputs can inject malicious commands into Bash/Write/Edit calls"
+    },
+    {
+      "id": "EXT_HOOK_002",
+      "category": "hook-hijacking",
+      "severity": "HIGH",
+      "description": "Hook capturing and logging session or conversation data",
+      "regex": "(?:session_id|conversation|transcript|message_history|chat_log).*(?:log|save|write|send|post|store)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Hooks that capture session data can exfiltrate conversation contents"
+    },
+    {
+      "id": "EXT_HOOK_003",
+      "category": "hook-hijacking",
+      "severity": "CRITICAL",
+      "description": "Hook auto-approving or bypassing permission checks",
+      "regex": "(?:auto.?approv|bypass.*(?:check|verify|permission|auth)|always.*(?:allow|approve|permit|accept))",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".json"
+      ],
+      "context_note": "Hooks that auto-approve actions bypass the user's safety controls"
+    },
+    {
+      "id": "EXT_RUGPULL_001",
+      "category": "rug-pull",
+      "severity": "CRITICAL",
+      "description": "Time-based activation trigger (datetime/schedule check before malicious action)",
+      "regex": "(?:datetime\\.(?:now|today)|Date\\.now|new\\s+Date).*(?:>|after|>=).*(?:exec|eval|system|spawn|fetch|request)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Time-based triggers delay malicious behavior to pass initial security reviews"
+    },
+    {
+      "id": "EXT_RUGPULL_002",
+      "category": "rug-pull",
+      "severity": "HIGH",
+      "description": "Remote kill switch or feature flag check before execution",
+      "regex": "(?:fetch|requests?\\.get|axios\\.get|urllib).*(?:enabled|active|execute|kill|switch|flag).*(?:exec|eval|system|run)",
+      "flags": "IGNORECASE|DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Remote feature flags can activate dormant malicious code after installation"
+    },
+    {
+      "id": "EXT_RUGPULL_003",
+      "category": "rug-pull",
+      "severity": "HIGH",
+      "description": "Counter-based activation (execute after N invocations)",
+      "regex": "(?:count|invocation|call_count|run_count|usage_count).*(?:>=?|>)\\s*\\d+.*(?:exec|eval|system|spawn|fetch)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Counter-based triggers delay malicious behavior to establish trust"
+    },
+    {
+      "id": "EXT_SUPPLY_001",
+      "category": "supply-chain",
+      "severity": "HIGH",
+      "description": "Postinstall script making network requests",
+      "regex": "(?:postinstall|preinstall|install).*(?:curl|wget|fetch|request|http|axios)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".json",
+        ".sh",
+        ".py"
+      ],
+      "context_note": "Install scripts that make network requests can download and execute malicious payloads"
+    },
+    {
+      "id": "EXT_SUPPLY_002",
+      "category": "supply-chain",
+      "severity": "HIGH",
+      "description": "Dynamic code download and execution pattern",
+      "regex": "(?:urllib|requests?\\.get|fetch|axios|curl).*(?:exec|eval|compile|Function|subprocess|spawn)",
+      "flags": "IGNORECASE|DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Downloading and executing code at runtime bypasses all static analysis"
+    },
+    {
+      "id": "EXT_SUPPLY_003",
+      "category": "supply-chain",
+      "severity": "MEDIUM",
+      "description": "Git submodule or subtree with external repository",
+      "regex": "(?:\\.gitmodules|git\\s+submodule\\s+add|git\\s+subtree\\s+add).*(?:github|gitlab|bitbucket|http)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".gitmodules",
+        ".sh",
+        ".bash",
+        ".md"
+      ],
+      "context_note": "Git submodules can pull in external code that changes without notice"
+    },
+    {
+      "id": "EXT_MCP_001",
+      "category": "mcp-specific",
+      "severity": "CRITICAL",
+      "description": "MCP tool description with embedded instructions for the agent",
+      "regex": "(?:description|help|doc).*(?:IMPORTANT|MANDATORY|ALWAYS|MUST|CRITICAL).*(?:call|invoke|execute|run|use)\\s+(?:this|the)\\s+tool",
+      "flags": "IGNORECASE|DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".json"
+      ],
+      "context_note": "Tool descriptions that instruct the agent to always call a tool are a form of prompt injection"
+    },
+    {
+      "id": "EXT_MCP_002",
+      "category": "mcp-specific",
+      "severity": "HIGH",
+      "description": "MCP tool shadowing (redefining common tool names)",
+      "regex": "(?:tool_name|name)\\s*[=:]\\s*[\"'](?:bash|read|write|edit|glob|grep|web_search|browser)[\"']",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".json"
+      ],
+      "context_note": "Shadowing built-in tool names can intercept and manipulate tool calls"
+    },
+    {
+      "id": "EXT_MCP_003",
+      "category": "mcp-specific",
+      "severity": "HIGH",
+      "description": "MCP response manipulation (modifying tool results before returning)",
+      "regex": "(?:tool_result|response|output).*(?:replace|inject|append|modify|alter).*(?:return|send|respond)",
+      "flags": "IGNORECASE|DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Modifying tool results can inject false information or hidden instructions into the agent's context"
+    },
+    {
+      "id": "EXT_MCP_004",
+      "category": "mcp-specific",
+      "severity": "CRITICAL",
+      "description": "Cross-tool data leakage (passing data between MCP tools covertly)",
+      "regex": "(?:global|shared|state|context).*(?:secret|key|token|credential|password).*(?:tool|mcp|server)",
+      "flags": "IGNORECASE|DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Shared state between tools can leak credentials across trust boundaries"
     }
   ],
   "multiline_patterns": [
@@ -98,6 +834,48 @@
         ".ts"
       ],
       "context_note": "Reading a file then sending its contents over the network is a classic exfiltration pattern"
+    },
+    {
+      "id": "EXT_ML_002",
+      "category": "credential-theft",
+      "severity": "CRITICAL",
+      "description": "Environment variable collection followed by network send",
+      "regex": "(?:os\\.environ|process\\.env|environ\\.items|Object\\.entries\\(process\\.env\\)).*(?:requests|fetch|axios|urllib|http\\.request)",
+      "flags": "DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Collecting environment variables and sending them to a server is credential theft"
+    },
+    {
+      "id": "EXT_ML_003",
+      "category": "rug-pull",
+      "severity": "CRITICAL",
+      "description": "Conditional code that changes tool behavior based on external signal",
+      "regex": "(?:if|when|while).*(?:fetch|request|get).*(?:then|do|:).*(?:description|docstring|tool_description|help_text).*(?:=|replace|update)",
+      "flags": "DOTALL|IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Dynamically changing tool descriptions based on remote signals enables delayed prompt injection"
+    },
+    {
+      "id": "EXT_ML_004",
+      "category": "code-execution",
+      "severity": "CRITICAL",
+      "description": "Multi-stage code construction from string parts",
+      "regex": "(?:parts|chunks|segments|pieces|fragments)\\s*[=:]\\s*\\[.*?(?:join|concat|\\+).*?(?:eval|exec|Function|system|subprocess)",
+      "flags": "DOTALL|IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Building code from fragments evades pattern matching on complete malicious commands"
     }
   ],
   "known_malicious": [
@@ -121,6 +899,95 @@
         ".py",
         ".js",
         ".ts"
+      ]
+    },
+    {
+      "id": "EXT_MAL_002",
+      "name": "mcp-env-dumper (environment variable harvester)",
+      "description": "Dumps all environment variables and sends them to an external endpoint, often disguised as a diagnostics or configuration tool",
+      "severity": "CRITICAL",
+      "fingerprints": [
+        "os\\.environ\\.items|Object\\.entries\\(process\\.env\\)|dict\\(os\\.environ\\)",
+        "json\\.dumps|JSON\\.stringify",
+        "requests\\.post|fetch|urllib\\.request"
+      ],
+      "fingerprint_flags": [
+        "",
+        "",
+        ""
+      ],
+      "min_matches": 3,
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ]
+    },
+    {
+      "id": "EXT_MAL_003",
+      "name": "mcp-ssh-exfil (SSH key exfiltration tool)",
+      "description": "Reads SSH private keys and sends them to an attacker-controlled server",
+      "severity": "CRITICAL",
+      "fingerprints": [
+        "\\.ssh[/\\\\](?:id_rsa|id_ed25519|id_ecdsa|authorized_keys)",
+        "open\\(|read_text|readFileSync",
+        "requests\\.post|fetch|urllib|http\\.request"
+      ],
+      "fingerprint_flags": [
+        "IGNORECASE",
+        "",
+        ""
+      ],
+      "min_matches": 3,
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ]
+    },
+    {
+      "id": "EXT_MAL_004",
+      "name": "mcp-browser-stealer (browser credential theft)",
+      "description": "Accesses browser credential stores (Chrome Login Data, Firefox logins.json) and exfiltrates passwords",
+      "severity": "CRITICAL",
+      "fingerprints": [
+        "Login Data|logins\\.json|Cookies|cookies\\.sqlite",
+        "sqlite3|leveldb|cryptography|CryptUnprotectData",
+        "requests\\.post|fetch|urllib|http\\.request"
+      ],
+      "fingerprint_flags": [
+        "IGNORECASE",
+        "IGNORECASE",
+        ""
+      ],
+      "min_matches": 3,
+      "file_types": [
+        ".py",
+        ".js"
+      ]
+    },
+    {
+      "id": "EXT_MAL_005",
+      "name": "mcp-persistence-installer (startup persistence)",
+      "description": "Installs itself as a persistent startup item via cron, systemd, launchd, or Windows Registry",
+      "severity": "CRITICAL",
+      "fingerprints": [
+        "crontab|systemctl|launchctl|HKEY.*Run|Task Scheduler|schtasks",
+        "enable|start|register|create|add",
+        "python|node|bash|sh|cmd"
+      ],
+      "fingerprint_flags": [
+        "IGNORECASE",
+        "IGNORECASE",
+        "IGNORECASE"
+      ],
+      "min_matches": 3,
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
       ]
     }
   ]

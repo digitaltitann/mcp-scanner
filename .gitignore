@@ -11,3 +11,6 @@ signatures/feed_config.json
 
 # Runtime logs and reports
 runtime-monitor.log
+
+# Scan targets (cloned malicious repos for testing)
+scan-targets/

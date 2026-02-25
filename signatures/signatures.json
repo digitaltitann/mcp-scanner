@@ -1,0 +1,127 @@
+{
+  "version": "1.1.0",
+  "updated": "2026-02-25T02:01:26.971618+00:00",
+  "source": "local",
+  "description": "External signature definitions for MCP Scanner. These are loaded at runtime and merged with built-in patterns. Run update_signatures.py to fetch latest from remote.",
+  "patterns": [
+    {
+      "id": "EXT_PROMPT_001",
+      "category": "prompt-injection",
+      "severity": "CRITICAL",
+      "description": "Jailbreak: 'Act as DAN' or 'Do Anything Now' prompt injection",
+      "regex": "(?:act\\s+as|you\\s+are)\\s+(?:DAN|do\\s+anything\\s+now)",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".py",
+        ".js",
+        ".ts",
+        ".mjs",
+        ".cjs",
+        ".jsx",
+        ".tsx"
+      ],
+      "context_note": "DAN-style jailbreak attempts to remove safety constraints"
+    },
+    {
+      "id": "EXT_PROMPT_002",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Invisible Unicode characters detected (zero-width spaces, joiners)",
+      "regex": "[\\u200b\\u200c\\u200d\\u2060\\ufeff]{3,}",
+      "flags": "",
+      "file_types": [
+        ".md",
+        ".mdx",
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Clusters of invisible Unicode characters may hide instructions from human review"
+    },
+    {
+      "id": "EXT_PROMPT_003",
+      "category": "prompt-injection",
+      "severity": "HIGH",
+      "description": "Prompt injection via markdown image with data URL",
+      "regex": "!\\[[^\\]]*\\]\\(data:",
+      "flags": "",
+      "file_types": [
+        ".md",
+        ".mdx"
+      ],
+      "context_note": "Data URLs in markdown images can encode hidden content or exfiltrate data"
+    },
+    {
+      "id": "EXT_EXFIL_001",
+      "category": "data-exfiltration",
+      "severity": "CRITICAL",
+      "description": "DNS-based exfiltration pattern (subprocess with nslookup/dig + variable)",
+      "regex": "(?:nslookup|dig)\\s+.*\\$|(?:nslookup|dig)\\s+.*\\{",
+      "flags": "",
+      "file_types": [
+        ".py",
+        ".js",
+        ".sh",
+        ".bash",
+        ".zsh"
+      ],
+      "context_note": "DNS queries with dynamic data can exfiltrate secrets through DNS resolution"
+    },
+    {
+      "id": "EXT_EXFIL_002",
+      "category": "data-exfiltration",
+      "severity": "HIGH",
+      "description": "Clipboard access detected (pyperclip, xclip, pbcopy)",
+      "regex": "(?:pyperclip|xclip|pbcopy|pbpaste|clipboard\\.(?:copy|paste))",
+      "flags": "IGNORECASE",
+      "file_types": [
+        ".py",
+        ".js",
+        ".sh"
+      ],
+      "context_note": "Clipboard access can steal copied credentials or sensitive data"
+    }
+  ],
+  "multiline_patterns": [
+    {
+      "id": "EXT_ML_001",
+      "category": "data-exfiltration",
+      "severity": "CRITICAL",
+      "description": "File read followed by network send (multi-line)",
+      "regex": "(?:open|read_text|readFileSync)\\s*\\([^;]*?(?:requests\\.post|fetch|axios|urllib)",
+      "flags": "DOTALL",
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ],
+      "context_note": "Reading a file then sending its contents over the network is a classic exfiltration pattern"
+    }
+  ],
+  "known_malicious": [
+    {
+      "id": "EXT_MAL_001",
+      "name": "claude-mcp-stealer (hypothetical credential harvester)",
+      "description": "Masquerades as a helpful MCP utility but steals Claude API keys and session tokens from environment and config files",
+      "severity": "CRITICAL",
+      "fingerprints": [
+        "CLAUDE_API_KEY|ANTHROPIC_API_KEY",
+        "session_key|session_token",
+        "requests\\.post|fetch.*POST"
+      ],
+      "fingerprint_flags": [
+        "IGNORECASE",
+        "IGNORECASE",
+        "DOTALL"
+      ],
+      "min_matches": 3,
+      "file_types": [
+        ".py",
+        ".js",
+        ".ts"
+      ]
+    }
+  ]
+}

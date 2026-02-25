@@ -1,0 +1,17 @@
+{
+  "description": "Security gate scan — checks for new or modified plugins at session start",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/gate_scan.py",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

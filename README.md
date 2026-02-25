@@ -53,7 +53,7 @@ Or ask naturally: *"Is this plugin safe?"*
 
 ## What It Detects
 
-**88 signatures** across 11 threat categories:
+**81 built-in signatures** across 11 threat categories (expandable to 145+ with the [community signature feed](https://github.com/digitaltitann/mcp-signatures)):
 
 | Category | Examples |
 |----------|----------|
@@ -127,14 +127,26 @@ python scripts/update_signatures.py --add-pattern '{"id":"MY_001","category":"pr
 # Add a known malicious signature
 python scripts/update_signatures.py --add-malicious '{"id":"MY_MAL_001","name":"Evil Tool","description":"Does bad things","severity":"CRITICAL","fingerprints":["pattern1","pattern2"],"min_matches":2,"file_types":[".py"]}'
 
-# Set up a remote signature feed
-python scripts/update_signatures.py --set-feed https://raw.githubusercontent.com/user/sigs/main/signatures.json
+# Set up the community signature feed (recommended)
+python scripts/update_signatures.py --set-feed https://raw.githubusercontent.com/digitaltitann/mcp-signatures/master/signatures.json
 
 # Fetch and merge latest signatures
 python scripts/update_signatures.py --fetch
 
 # Validate signatures file
 python scripts/update_signatures.py --validate
+```
+
+### Community Signature Feed
+
+Subscribe to the [community signature feed](https://github.com/digitaltitann/mcp-signatures) for 60+ additional patterns covering cloud credentials (AWS/GCP/Azure), browser credential theft, MCP-specific attacks (tool shadowing, response manipulation), supply chain signals, and more:
+
+```bash
+# One-time setup
+python scripts/update_signatures.py --set-feed https://raw.githubusercontent.com/digitaltitann/mcp-signatures/master/signatures.json
+
+# Fetch latest (run periodically)
+python scripts/update_signatures.py --fetch
 ```
 
 ### Allowlist
@@ -196,7 +208,7 @@ mcp-scanner/
 │   ├── gate_scan.py             # SessionStart gate scan
 │   └── runtime_monitor.py       # PreToolUse runtime monitor
 ├── scripts/
-│   ├── scan_plugin.py           # Core scanner (88 signatures)
+│   ├── scan_plugin.py           # Core scanner (81 built-in + community feed)
 │   ├── daily_scan.py            # Daily scheduled scan
 │   ├── update_signatures.py     # Signature management
 │   ├── audit_deps.py            # Dependency auditor

@@ -14,6 +14,13 @@
       "pattern_ids": ["PROMPT_*", "CODE_EXEC_*", "EXFIL_*", "CRED_*", "NET_*", "FS_*", "HOOK_*", "OBFUSC_*", "PERM_*", "RUGPULL_*", "MAL_*", "EXT_*"],
       "reason": "MCP scanner contains detection patterns as regex strings — scanning itself triggers every category",
       "added": "2026-02-24"
+    },
+    {
+      "id": "allowlist-003",
+      "plugin_pattern": "plugin-dev",
+      "pattern_ids": ["PROMPT_*", "CODE_EXEC_*", "EXFIL_*", "CRED_*", "NET_*", "FS_*", "HOOK_*", "OBFUSC_*", "PERM_*"],
+      "reason": "Plugin development tutorial — documentation examples reference dangerous patterns as instructional content",
+      "added": "2026-02-25"
     }
   ]
 }
